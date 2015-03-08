@@ -1,0 +1,20 @@
+  graph = new createjs.Container(); // 用来盛放独立图形的容器
+  var colorG = new createjs.Text(color);  // 存放图形的颜色信息（text）
+  var shapeG = new createjs.Text(shape);  // 存放图形的形状信息（text）
+  var sizeG  = new createjs.Text(size);   // 存放图形的大小信息（text）
+  // control point: 控制点位置，记录着图形左上和右下两脚的位置。（对箭头则是起点和终点）（text）
+  var cp = [new createjs.Text(),new createjs.Text()];
+  // hit point: 拖动点，通过四个拖动点来修改图形。（对箭头则是起点和终点）（display）
+  var hp = [new createjs.Shape(), new createjs.Shape(), new createjs.Shape(), new createjs.Shape()];
+  var drawG = new createjs.Shape(); // 最终绘制的图形（display）
+
+  colorG.name = "color";
+  shapeG.name = "shape";
+  sizeG.name = "size";
+  cp[0].name = "cp1";
+  cp[1].name = "cp2";
+  hp[0].name = "hp1";
+  hp[1].name = "hp2";
+  hp[2].name = "hp3";
+  hp[3].name = "hp4";
+  drawG.name = "draw";

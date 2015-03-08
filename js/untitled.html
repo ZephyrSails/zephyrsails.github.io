@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>DOMElement Tutorial</title>
+ 
+            <script src="http://code.createjs.com/easeljs-0.4.2.min.js"></script>
+        <script src="http://code.createjs.com/tweenjs-0.2.0.min.js"></script>
+        <link rel="stylesheet" href="css/style.css">
+         
+        <script>
+        var canvas, stage, exportRoot;
+        window.onload = init;
+         
+        function init() {
+            canvas = document.getElementById("canvas");
+ 
+            stage = new Stage(canvas);
+             
+            Ticker.setFPS(32);
+            Ticker.addListener(stage);
+        }
+        </script>
+    </head>
+ 
+    <body>
+        <div id="main">
+            <H1>DOMElements example</H1>
+            <form id="myform" >
+                <label for="firstName">Enter your firstName:</label>
+                <input type="text" id="fistName/><br>
+                <label for="lastName">Enter your lastName:</label>
+                <input type="text"  id="lastName"/><br>
+                <br>
+                <input type="checkbox" id="case" /> 
+                <label for="case">Alpha 50%</label><br>
+                <p id="submit" >
+                    <input type="submit" value="Submit"/>
+                </p>
+            </form>
+            <canvas id="canvas" width="800" height="600" style="background-color:#000000">
+                <p>Your browser is sooooo old ! Download a modern one now !</p>
+            </canvas>
+        </div>
+    </body>
+</html>
