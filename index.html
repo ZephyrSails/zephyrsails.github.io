@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--- utf 8 -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <!-- jquery -->
+  <script src="js/jquery-2.1.1.min.js"></script>
+  <!-- easeljs -->
+  <!--script src="js/easeljs-0.8.0.min.js"/-->
+  <script src="js/easeljs-NEXT.min.js"/>
+  <!-- bootstrap -->
+  <script src="js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css"/>
+  <!--- button & font -->
+  <script src="js/buttons.js"></script>
+	<link href="font-awesome-4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+	<link href="css/button.css" rel="stylesheet" type="text/css"/>
+  <!-- CSS -->
+  <link href="css/canvas.css" rel="stylesheet" type="text/css"/>
+  <script src="js/control.js"></script>
+  <!--script src="js/canvas_contro.js"></script-->
+
+
+  
+  <!--- online script -->
+  <!--script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+  <script src="http://libs.baidu.com/bootstrap/3.0.3/js/bootstrap.min.js"></script-->
+  <!--link href="../EaselJS-0.8.0/_assets/css/shared.css" rel="stylesheet" type="text/css"/>
+  <link href="../EaselJS-0.8.0/_assets/css/examples.css" rel="stylesheet" type="text/css"/>
+  <script src="../EaselJS-0.8.0/_assets/js/examples.js"></script-->
+
+  
+</head>
+<body>
+<div style="width:520px;">
+  <div id="div-function" style="width:320px;padding:0;margin:0;display:inline;float:left;">
+    <div id="btn-group-function" class="button-group">
+      <!-- btn-arrow -->
+      <button id="arrow-btn" type="button" class="button button-jumbo button-square">
+        <i class="fa fa-long-arrow-right"></i></button>
+      <!-- btn-words -->
+      <button id="words-btn" type="button" class="button button-jumbo button-square">
+        <i class="fa fa-font"></i></button>
+      <!-- btn-pencil -->
+      <span class="button-dropdown button-dropdown-jumbo" data-buttons="dropdown">
+        <button id="pencil-btn" href="#" class="button button-jumbo button-square">
+          <i class="fa fa-pencil"></i>
+          <i class="fa fa-caret-down"></i></button>
+          <ul id="pencil-selection" class="button-dropdown-list is-below">
+            <li id="pen-pencil"><a><i class="fa fa-pencil"></i></a></li>
+            <li id="pen-eraser"><a><i class="fa fa-eraser"></i></a></li>
+          </ul>
+      </span>
+      <!-- btn-shapes -->
+      <span class="button-dropdown button-dropdown-jumbo" data-buttons="dropdown">
+        <button id="shapes-btn" href="#" class="button button-jumbo button-square">
+          <i class="fa fa-circle-thin"></i>
+          <i class="fa fa-caret-down"></i></button>
+          <ul id="shape-selection" class="button-dropdown-list is-below">
+            <li id="shape-circle"><a><i class="fa fa-circle-thin"></i></a></li>
+            <li id="shape-square"><a><i class="fa fa-square-o"></i></a></li>
+            <li id="shape-line"><a><i class="fa fa-underline"></i></a></li>
+          </ul>
+      </span>
+      <!-- btn-tips -->
+      <span class="button-dropdown button-dropdown-jumbo" data-buttons="dropdown">
+        <button id="tips-btn" href="#" class="button button-jumbo button-square">
+          <i class="fa fa-check-circle"></i>
+          <i class="fa fa-caret-down"></i></button>
+          <ul id="tip-selection" class="button-dropdown-list is-below">
+            <li id="yes"><a><i class="fa fa-check-circle"></i></a></li>
+            <li id="no"><a><i class="fa fa-times-circle"></i></a></li>
+            <li id="why"><a><i class="fa fa-question-circle"></i></a></li>
+            <li id="wow"><a><i class="fa fa-exclamation-circle"></i></a></li>
+            <li id="love"><a><i class="fa fa-gratipay"></i></a></li>
+          </ul>
+      </span>
+    </div>
+  </div>
+  <div style="width:200px;padding:0;display:inline;float:left;">
+    <span class="button-wrap button-dropdown" data-buttons="dropdown">
+      <a id="colors-btn" href="#" class="button button-circle button-primary button-raised">
+        <i class="fa fa-sort-desc"></i>
+      </a>
+      <ul id="color-selection" class="button-dropdown-list is-below">
+        <li id="blue"><a style="margin: 2px auto;" class="button button-circle button-primary button-raised"></a></li>
+        <li id="green"><a style="margin: 2px auto;" class="button button-circle button-action button-raised"></a></li>
+        <li id="yellow"><a style="margin: 2px auto;" class="button button-circle button-highlight button-raised"></a></li>
+        <li id="red"><a style="margin: 2px auto;" class="button button-circle button-caution button-raised"></a></li>
+        <li id="purple"><a style="margin: 2px auto;" class="button button-circle button-royal button-raised"></a></li>
+      </ul>
+    </span>
+    <span class="button-wrap button-dropdown" data-buttons="dropdown">
+      <a id="size-btn" href="#" class="button suit-jumbo button-circle button-raised">
+        <i class="fa fa-bullseye"></i>
+      </a>
+      <ul id="size-selection" class="button-dropdown-list is-below">
+        <li id="small"><a style="margin: 2px auto;" class="button button-circle button-raised">
+        <i class="fa fa-bullseye"></i></a></li>
+        <li id="middle"><a style="margin: 2px auto;" class="button button-circle button-raised">
+        <i class="fa fa-dot-circle-o"></i></a></li>
+        <li id="big"><a style="margin: 2px auto;" class="button button-circle button-raised">
+        <i class="fa fa-circle"></i></a></li>
+      </ul>
+    </span>
+
+    <span class="button-wrap">
+      <button id="delete-btn" class="button button-circle button-raised">
+        <i class="fa fa-recycle"></i>
+      </button>
+    </span>
+
+  </div>
+</div>
+
+<br><br><br><br>
+
+<!-- Canvas begin here -->
+<div id="canvasDiv">
+  <canvas id="Canvas" width="500" height="400" style="border:1px solid #000;"></canvas>
+</div>
+
+<i id="testi" class="fa fa-circle" style="width:400px;height:50px;"> 你好，旅行者。目前这里只有一个画板，文字功能尚在改善，update comming soon.<br>
+图形都是可以拖动的喔，点击一下试试。<br> 
+报告bug 到zephyrsails@gmail.com<br> 修齐治平版权所有，允许转载，但请注明出处。</i>
+<i id="testi" class="fa fa-circle" style="width:400px;height:50px;"> Greeting traveller, wellcome to zephyr's site, there are only a canvas for you by now and type function are not ready yet, update comming soon.<br>
+all elements are dragable, try to click them.<br> 
+reporting bug to zephyrsails@gmail.com<br> made by Zephyr Xiu, all right reserved.</i>
+<!--input></input-->
+
+</body>
+</html>
