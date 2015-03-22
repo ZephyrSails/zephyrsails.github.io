@@ -346,7 +346,7 @@ function wordMouseMove(event) {
   graph.cp2 = {x: stage.mouseX, y: stage.mouseY};
   var g = graph.getChildByName("draw");
   changing = false;
-  g.graphics.clear().setStrokeStyle(sizes["small"]).beginStroke(colors["blue"])
+  g.graphics.clear().setStrokeStyle(sizes["small"]).beginStroke(colors[color])
         .drawRect(graph.cp1.x, graph.cp1.y, graph.cp2.x-graph.cp1.x, graph.cp2.y-graph.cp1.y);
   stage.update();
   graph.jobDone = true;
