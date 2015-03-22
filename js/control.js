@@ -24,6 +24,7 @@ var sizes = {
   big_tip         : " fa-3x",
   big_tipSize     : "20",
   hitpoint        : 7
+
 }
 
 var tips = {
@@ -47,7 +48,8 @@ var tips = {
   love_color: colors["lt_red"],
   love_x: 11,
   love_y: 9,
-  tip_font: "24px SimHei"
+  tip_font: "24px SimHei",
+  word_font:"18px Arial"
 }
 
 var canvasData = {
@@ -63,6 +65,9 @@ var canvasData = {
   cp2y:   "", // owned by shapes && lines
   x:      "",
   y:      "",
+  word:   "",
+  height: "",
+  width:  "", 
 };
 var isMoved;
 var canvas_buffer = [];
@@ -103,6 +108,13 @@ var reRangeLock = false;
 
 var pencil = new createjs.Shape();
 
+var wordLength;
+var word;
+var wordHeight;
+var wordX;
+var wordY;
+var wordGraph;
+
 
 $(document).ready(function(){
   init(); // initiate the Canvas
@@ -123,7 +135,9 @@ $(document).ready(function(){
     update_dashboard(current_function);
     stage.removeAllEventListeners();
 
-    stage.addEventListener("stagemousedown", wordClick);
+    stage.addEventListener("stagemousedown", wordMouseDown);
+    stage.addEventListener("stagemouseup", wordMouseUp);
+    //stage.addEventListener("stagemousedown", wordClick);
   });
 
   $("ul#pencil-selection li").click(function(){ // what would happen when pencil-btn clicked
@@ -191,16 +205,10 @@ $(document).ready(function(){
   $("button#delete-btn").click(function(){
     if(focusGraph) {
       // focusGraph.uncache();
-      // syncLocalToData("delete", focusGraph);
+      syncLocalToData("delete", focusGraph);
       eliminate(focusGraph);
     }
   });
-
-  // Button control over after this line. //
-  // ------------------------------------ //
-  // And Canvas control begin.            //
-
-
 });
 
 function update_dashboard(current_func) {
@@ -220,8 +228,12 @@ function init() { // set up stage and bind it to canvas.
   // enabled mouse over / out events
   stage.enableMouseOver(10);
   stage.mouseMoveOutside = true; // keep tracking the mouse even when it leaves the canvas
-  
+  //var text = new createjs.Text("Hello World", "20px Arial", "#ff7700");
+  //text.x = 100;
+  //text.textBaseline = "alphabetic";
+
   pencil.cache(0,0,500,400);
+ //  pencil.addChild(text);
   stage.addChild(pencil);
   stage.update();
 }
@@ -234,6 +246,7 @@ function drawMouseDown(event) {
     return;
   if (focusGraph)
     loseFocus();
+  wordFocus();
   
   // stroke = sizes[size];
   stroke = (sizes[size]*3);
@@ -254,7 +267,7 @@ function drawMouseMove(event) {
   graph.y = midPt.y;
   graph.cp1.x = oldPt.x;
   graph.cp1.y = oldPt.y;
-  // syncLocalToData("draw", graph);
+  syncLocalToData("draw", graph);
 
   var stroke = (graph.shape == "pencil")?sizes[size]:sizes[size]*3;
   pencil.graphics.setStrokeStyle(stroke, 'round', 'round')
@@ -286,6 +299,7 @@ function shapeMouseDown(event) { // the begining of a drawing
     return;
   if (focusGraph)
     loseFocus();
+  wordFocus();
   prepareGraph(color, shape, size, canvas_index, stage.mouseX, stage.mouseY);
   stage.addEventListener("stagemousemove", shapeMouseMove);
 }
@@ -301,14 +315,152 @@ function shapeMouseUp(event) {
   stage.removeEventListener("stagemousemove", shapeMouseMove);
   if (graph.jobDone == true)
   {
-    // syncLocalToData("create", graph);
+    syncLocalToData("create", graph);
     graph.jobDone = false;
   }
+  
   addShapeFunction(graph);
   // alert(canvas_index);
   // reRangeLock = false;
 }
 
+function wordMouseDown(event) { // the begining of a drawing
+  if (reRangeLock)  // 是否正在调整图形？
+    return;
+  if (focusGraph)
+    loseFocus();
+  //prepareGraph(color, "shape-square", size, canvas_index, stage.mouseX, stage.mouseY);
+  wordFocus();
+  graph = new createjs.Container(); // 用来盛放独立图形的容器
+  graph.cp1 = {x: stage.mouseX , y: stage.mouseY};
+  var drawG;
+  drawG = new createjs.Shape(); // 最终绘制的图形（display）
+  drawG.name = "draw";
+  graph.addChild(drawG);
+  stage.addChild(graph);
+  
+
+  stage.addEventListener("stagemousemove", wordMouseMove);
+}
+function wordMouseMove(event) {
+  graph.cp2 = {x: stage.mouseX, y: stage.mouseY};
+  var g = graph.getChildByName("draw");
+  changing = false;
+  g.graphics.clear().setStrokeStyle(sizes["small"]).beginStroke(colors["blue"])
+        .drawRect(graph.cp1.x, graph.cp1.y, graph.cp2.x-graph.cp1.x, graph.cp2.y-graph.cp1.y);
+  stage.update();
+  graph.jobDone = true;
+  //draw.graphics.clear().setStrokeStyle(sizes[g.size]).beginStroke(colors[g.color])
+        //.drawRoundRect(g.cp1.x, g.cp1.y, g.cp2.x-g.cp1.x, g.cp2.y-g.cp1.y, 7);
+}
+function wordMouseUp(event) {
+  if (reRangeLock)  // 是否正在调整图形？
+    return;
+  if (!graph.jobDone) {
+    stage.removeEventListener("stagemousemove", wordMouseMove);
+    graph.jobDone = false;
+    return;
+  }
+  else
+    graph.jobDone = false;
+  stage.removeEventListener("stagemousemove", wordMouseMove);
+  wordX = graph.cp1.x;
+  wordY = graph.cp1.y;
+  wordLength = graph.cp2.x-graph.cp1.x;
+  wordHeight = graph.cp2.y-graph.cp1.y;
+  stage.removeChild(graph);
+  getTextarea(0,0,0,0,0);
+}
+
+function wordFocus(){
+  if(wordGraph){
+    if(wordGraph.value==""){
+    
+      document.body.removeChild(wordGraph);
+      
+    }
+    else{
+      word = wordGraph.value;
+      wordLength = wordGraph.clientWidth;
+      wordHeight = wordGraph.clientHeight;
+    
+      if(!focusGraph){
+        cp1x = wordGraph.id;
+        cp1y = wordGraph.name;
+        cp2x = parseFloat(wordGraph.id) + wordLength;
+        cp2y = parseFloat(wordGraph.name) + wordHeight;
+        prepareWordGraph(cp1x,cp2x,cp1y,cp2y,word,canvas_index,tips["word_font"],"word",colors[color]);  
+      
+        drawWord(graph);
+        addWordFunction(graph);
+        
+        syncLocalToData("write", graph);
+      }
+      else{
+        focusGraph.cp1.x = parseFloat(focusGraph.getChildByName("draw").x);
+        focusGraph.cp1.y = parseFloat(focusGraph.getChildByName("draw").y);
+        focusGraph.cp2.x = parseFloat(focusGraph.getChildByName("draw").x) + wordLength;
+        focusGraph.cp2.y = parseFloat(focusGraph.getChildByName("draw").y) + wordHeight; 
+        focusGraph.word = word;
+
+        focusGraph.color = colors[color];
+        focusGraph.lineWidth = wordLength;
+
+        drawWord(focusGraph);
+        focusGraph.visible = true;
+        syncLocalToData("writeChanging", focusGraph);
+      }
+      document.body.removeChild(wordGraph);
+      stage.update();
+    }
+    wordGraph = null;
+  }
+}
+function getTextarea(x,y,px,py,g){
+  var newTip = document.createElement("textarea");
+  wordGraph = newTip;
+  // tip = document.getElementById("testi");
+  $(newTip).attr("class", tips[tip] + sizes["small_tip"]);
+  // alert(newTip.attr("class"));
+  //alert(tip+"_color");
+  
+  $(newTip).attr("style", "color:" + colors[color] + " ;font: Arial ; font-size:18px; line-height:18px");
+  $(newTip).css("width",wordLength);
+  $(newTip).css("height",wordHeight);
+  
+  if(x!=0 || y!=0){
+   $(newTip).text(g.word);
+  }
+  // $(newTip).autosize();
+
+  domElement = new createjs.DOMElement(newTip);
+
+
+
+//addshapefunction(domElement);
+  if(x==0 && y==0){
+    domElement.x = wordX;
+    domElement.y = wordY;
+    //domElement.x = stage.mouseX - sizes[size+"_tipSize"];
+    //domElement.y = stage.mouseY - sizes[size+"_tipSize"];
+  }
+  else{
+    domElement.x = px;
+    domElement.y = py;
+  }
+  $(newTip).attr("id",domElement.x);
+  $(newTip).attr("name",domElement.y);
+  document.body.insertBefore(newTip, document.getElementById("canvasDiv"));
+  if(x!=0 || y!=0){
+    $(newTip).css("width",g.width);
+    $(newTip).css("height",g.height);
+  }
+  //stage.autoClear = true;
+  stage.addChild(domElement);
+  stage.update();
+}
+
+/*
 function wordClick(event) {
   if (reRangeLock)  // 是否正在调整图形？
     return;
@@ -316,23 +468,149 @@ function wordClick(event) {
     loseFocus();
   //stage.autoClear = false;
   //var tip = tips["yes"];
-  var newTip = document.createElement("input");
-  // tip = document.getElementById("testi");
-  $(newTip).attr("class", tips[tip] + sizes["small_tip"]);
-  // alert(newTip.attr("class"));
-  //alert(tip+"_color");
-  $(newTip).attr("style", "color:" + colors[color]+";");
+
+  getTextarea(0,0,0,0,0);
   
-  domElement = new createjs.DOMElement(newTip);
+  
+}
+*/
+function prepareWordGraph(cp1x,cp2x,cp1y,cp2y,word,idx,size,shp,col){
+  graph = new createjs.Container();
 
-  domElement.x = stage.mouseX - sizes[size+"_tipSize"];
-  domElement.y = stage.mouseY - sizes[size+"_tipSize"];
-  document.body.insertBefore(newTip, document.getElementById("canvasDiv"));
+  graph.hasFunction = false;
+  // ============================================================
+  graph.name  = idx;
+  graph.word  = word;
+  graph.size  = size;
+  graph.shape = shp;
+  graph.color = col;
+  
+  // control point: 控制点位置，记录着图形左上和右下两脚的位置。（对箭头则是起点和终点）（text）
+  graph.cp1   = {x: cp1x, y: cp1y};
+  graph.cp2   = {x: cp2x, y: cp2y};
+  graph.width = graph.cp2.x - graph.cp1.x;
+  graph.height = graph.cp2.y - graph.cp1.y;
+  // hit point: 拖动点，通过四个拖动点来修改图形。（对箭头则是起点和终点）（display）
+  var hp = [new createjs.Shape(), new createjs.Shape(), new createjs.Shape(), new createjs.Shape()];
+  drawG = new createjs.Text(word,size, col);
+  
+  //drawG.maxWidth = 200 ;
+  
 
-  //stage.autoClear = true;
-  stage.addChild(domElement);
+  hp[0].name = "hp1";
+  hp[1].name = "hp2";
+  hp[2].name = "hp3";
+  hp[3].name = "hp4";
+  drawG.name = "draw";
+
+  
+  for (var i = 0; i < 4; i++)
+  {
+    hp[i].visible = false;
+  }
+  // 把（text）和（display）组件都装进容器里。
+  graph.addChild(drawG, hp[0], hp[1], hp[2], hp[3]);
+
+
+  stage.addChild(graph);
+  stage.update();
+
+}
+
+function addWordFunction(g){
+  g.getChildByName("draw").on("dblclick",function (evt){
+    g.visible = false;
+    syncLocalToData("writeChanging", g);
+    getTextarea(parseFloat(this.x),parseFloat(this.y),parseFloat(this.x) + parseFloat(this.parent.x),parseFloat(this.y) + parseFloat(this.parent.y),this.parent);
+  
+  });
+  g.getChildByName("draw").on("click", function (evt) { // focus
+    wordFocus();
+    getFocus(this);
+     
+    for (var i = 1; i <=4; i++) {
+      this.parent.getChildByName("hp"+i).on("mouseover", function (evt) {
+        reRangeLock = true;
+      });
+      this.parent.getChildByName("hp"+i).on("mouseout", function (evt) {
+        reRangeLock = false;
+      });
+    }
+    this.parent.getChildByName("hp1").on("pressmove", function (evt) {
+      this.parent.cp1.x = stage.mouseX - this.parent.x;
+      changing = true;
+      if(parseFloat(this.parent.cp2.x) > parseFloat(this.parent.cp1.x)){
+        drawWord(focusGraph);  
+      }
+      else{
+        this.parent.cp1.x = parseFloat(this.parent.cp2.x) - g.getChildByName("draw").getMeasuredWidth();
+        drawWord(focusGraph); 
+      }
+      syncLocalToData("writeChanging", this.parent);
+    });
+    this.parent.getChildByName("hp2").on("pressmove", function (evt) {
+      this.parent.cp2.x = stage.mouseX - this.parent.x; 
+      
+      changing = true;
+      if(parseFloat(this.parent.cp2.x) > parseFloat(this.parent.cp1.x)){
+        drawWord(focusGraph);  
+      }
+
+      syncLocalToData("writeChanging", this.parent);
+      
+    });
+    
+    
+  });
+  // the pressmove event is dispatched when the mouse moves after a mousedown on the target until the mouse is released.
+  
+  g.getChildByName("draw").on("mouseover", function (evt){
+    reRangeLock = true;
+  });
+  g.getChildByName("draw").on("rollover", function (evt){
+    reRangeLock = true;
+  });
+  g.getChildByName("draw").on("rollout", function (evt){
+    reRangeLock = false;
+  });
+
+
+}
+
+function drawWord(g){
+  var draw = g.getChildByName("draw");
+  var hp1  = g.getChildByName("hp1");
+  var hp2  = g.getChildByName("hp2");
+  var hp3  = g.getChildByName("hp3");
+  var hp4  = g.getChildByName("hp4");
+
+  draw.cursor = "pointer";
+  hp1.cursor = "crosshair";
+  hp2.cursor = "crosshair";
+  
+  
+  var sqrtS = Math.sqrt(sizes[g.size]);
+
+  g.width = parseFloat(g.cp2.x) - parseFloat(g.cp1.x);
+  
+
+  draw.text = g.word;
+  draw.x = g.cp1.x;
+  draw.y = g.cp1.y;
+  draw.lineWidth = g.width;
+
+  g.height = draw.getMeasuredHeight();
+
+  var hitWordArea = new createjs.Shape();
+  hitWordArea.graphics.beginFill("#FFF").drawRect(0, 0,draw.lineWidth,draw.getMeasuredHeight());
+  draw.hitArea = hitWordArea;
+  hp1.graphics.clear().beginFill(colors[color]).drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
+  hp2.graphics.clear().beginFill(colors[color]).drawCircle(g.cp2.x, g.cp1.y, sizes["hitpoint"]);
+
+  g.jobDone = true;
   stage.update();
 }
+
 
 function draw(g) {  // used to draw a picture.
   var draw = g.getChildByName("draw");
@@ -416,6 +694,8 @@ function draw(g) {  // used to draw a picture.
   stage.update();
 }
 
+
+
 function prepareGraph(clr, shp, siz, idx, cp1x, cp1y) {
   graph = new createjs.Container(); // 用来盛放独立图形的容器
   graph.color = clr;  // 存放图形的颜色信息
@@ -450,6 +730,8 @@ function prepareGraph(clr, shp, siz, idx, cp1x, cp1y) {
   // 把（text）和（display）组件都装进容器里。
   graph.addChild(drawG, hp[0], hp[1], hp[2], hp[3]);
 
+
+
   // canvas_container.addChild(graph);
 
   // 把容器放上舞台，登场。
@@ -462,6 +744,8 @@ function prepareGraph(clr, shp, siz, idx, cp1x, cp1y) {
 
 function addShapeFunction(g) {
   g.getChildByName("draw").on("click", function (evt) { // focus
+
+    wordFocus();
     getFocus(this);
     for (var i = 1; i <=4; i++) {
       this.parent.getChildByName("hp"+i).on("mouseover", function (evt) {
@@ -474,28 +758,28 @@ function addShapeFunction(g) {
     this.parent.getChildByName("hp1").on("pressmove", function (evt) {
       this.parent.cp1.x = stage.mouseX - this.parent.x;
       this.parent.cp1.y = stage.mouseY - this.parent.y;
-      // syncLocalToData("reshape", this.parent);
+      syncLocalToData("reshape", this.parent);
       changing = true;
       draw(focusGraph);
     });
     this.parent.getChildByName("hp2").on("pressmove", function (evt) {
       this.parent.cp2.x = stage.mouseX - this.parent.x;
       this.parent.cp1.y = stage.mouseY - this.parent.y;
-      // syncLocalToData("reshape", this.parent);
+      syncLocalToData("reshape", this.parent);
       changing = true;
       draw(focusGraph);
     });
     this.parent.getChildByName("hp3").on("pressmove", function (evt) {
       this.parent.cp2.x = stage.mouseX - this.parent.x;
       this.parent.cp2.y = stage.mouseY - this.parent.y;
-      // syncLocalToData("reshape", this.parent);
+      syncLocalToData("reshape", this.parent);
       changing = true;
       draw(focusGraph);
     });
     this.parent.getChildByName("hp4").on("pressmove", function (evt) {
       this.parent.cp1.x = stage.mouseX - this.parent.x;
       this.parent.cp2.y = stage.mouseY - this.parent.y;
-      // syncLocalToData("reshape", this.parent);
+      syncLocalToData("reshape", this.parent);
       changing = true;
       draw(focusGraph);
     });
@@ -510,10 +794,11 @@ function addShapeFunction(g) {
   });
   g.getChildByName("draw").on("rollout", function (evt){
     reRangeLock = false;
-  });
+  });$
 }
 
 function loseFocus() {
+  
   if (!focusGraph)
     return;
   focusGraph.getChildByName("draw").alpha = 1;
@@ -531,6 +816,7 @@ function loseFocus() {
 function getFocus(shap) {
   if (focusGraph)
       loseFocus();
+
   reRangeLock = true;
 
   $("button#delete-btn").attr("class", "button button-circle button-highlight button-raised");
@@ -539,6 +825,7 @@ function getFocus(shap) {
   for (var i = 1; i <= 4; i++) {
     shap.parent.getChildByName("hp"+i).visible = true;
   }
+  
   // stage.autoClear = true;
   focusGraph = shap.parent;
   canvas_current_index = focusGraph.name;
@@ -555,7 +842,7 @@ function getFocus(shap) {
     }*/
     shap.on("pressup", function (evt) {
       if (isMoved == true){
-        // syncLocalToData("change", this.parent);
+        syncLocalToData("change", this.parent);
         this.removeAllEventListeners("pressup");
       }
       isMoved = false;
@@ -566,6 +853,7 @@ function getFocus(shap) {
     this.parent.y = evt.stageY + this.parent.offset.y;
     isMoved = true;
     update = true;
+
     // syncLocalToData("change", this.parent);
     stage.update();    
   });
@@ -580,6 +868,7 @@ function syncLocalToData(operate, g) { // used by shapes && lines && tips
   canvasData["size"]  = g.size;
   canvasData["cp1x"]  = g.cp1.x;
   canvasData["cp1y"]  = g.cp1.y;
+
   if (operate == "draw")
   {
     canvasData["x"]   = g.x;
@@ -601,11 +890,31 @@ function syncLocalToData(operate, g) { // used by shapes && lines && tips
     canvas_buffer[canvas_index] = graph;
     canvas_index++;
   }
+  if(operate == "write"){
+    canvas_buffer[canvas_index] = graph;
+    canvas_index++;
+    canvasData["cp2x"]  = g.cp2.x;
+    canvasData["cp2y"]  = g.cp2.y;
+    canvasData["word"]  = g.word;
+    canvasData["width"] = g.width;
+    canvasData["height"] = g.height;
+  }
+  if(operate == "writeChanging"){
+
+    canvasData["cp2x"]  = g.cp2.x;
+    canvasData["cp2y"]  = g.cp2.y;
+    canvasData["word"]  = g.word;
+    canvasData["width"] = g.width;
+    canvasData["height"] = g.height;
+    canvasData["visible"] = g.visible;
+  }
+  /*
   for (var ID in dataChannels){
     dataChannels[ID].send(JSON.stringify(canvasData));
-  }
+  }*/
 }
 function syncDataToLocal(cData) {
+  
   if (cData["operate"] == "change") { // change
     canvas_buffer[cData["index"]].x = cData["x"]; //this.x + evt.stageX_new - evt.stageX_old
     canvas_buffer[cData["index"]].y = cData["y"];
@@ -638,6 +947,8 @@ function syncDataToLocal(cData) {
     draw(canvas_buffer[cData["index"]]);
   }
   if (cData["operate"] == "create") {  // create
+    canvas_index = cData["index"];
+    canvas_index++;
     prepareGraph(cData["color"], cData["shape"], cData["size"], cData["index"], cData["cp1x"], cData["cp1y"]);
     // graph.cp1 = {x: cData["cp1x"], y: cData["cp1y"]};
     if (cData["shape"] != "yes" && cData["shape"] != "no" && cData["shape"] != "why" && cData["shape"] != "wow" && cData["shape"] != "love") {
@@ -651,6 +962,28 @@ function syncDataToLocal(cData) {
     draw(graph);
     // }
     addShapeFunction(graph);
+  }
+  if (cData["operate"] == "write"){
+    canvas_index = cData["index"];
+    canvas_index++;
+    prepareWordGraph(cData["cp1x"],cData["cp2x"],cData["cp1y"],cData["cp2y"],cData["word"],cData["index"],cData["size"],cData["shape"],cData["color"],cData["width"],cData["height"])
+    changing = false;
+    canvas_buffer[cData["index"]] = graph;
+    drawWord(graph);
+    addWordFunction(graph);
+  }
+
+  if (cData["operate"] == "writeChanging"){
+    changing = true;
+    canvas_buffer[cData["index"]].cp1.x = cData["cp1x"];
+    canvas_buffer[cData["index"]].cp1.y = cData["cp1y"];
+    canvas_buffer[cData["index"]].cp2.x = cData["cp2x"];
+    canvas_buffer[cData["index"]].cp2.y = cData["cp2y"];
+    canvas_buffer[cData["index"]].word = cData["word"];
+    canvas_buffer[cData["index"]].width = cData["width"];
+    canvas_buffer[cData["index"]].height = cData["height"];
+    canvas_buffer[cData["index"]].visible = cData["visible"];
+    drawWord(canvas_buffer[cData["index"]]);
   }
 }
 
