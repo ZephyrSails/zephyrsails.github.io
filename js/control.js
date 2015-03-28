@@ -10,7 +10,9 @@ var colors = {
   red       : "rgb(255, 67, 81)",
   lt_red    : "rgb(255, 118, 128)",
   purple    : "rgb(123, 114, 233)",
-  lt_purple : "rgb(164, 158, 240)"
+  lt_purple : "rgb(164, 158, 240)",
+  hp_shadow : "rgb(144, 144, 144)",
+  hp_edge   : "rgb(254, 254, 254)"
 }
 
 var sizes = {
@@ -23,8 +25,9 @@ var sizes = {
   big             : 15,
   big_tip         : " fa-3x",
   big_tipSize     : "20",
-  hitpoint        : 7
-
+  hitpoint        : 7,
+  hitpoint_edge   : 3,
+  hitpoint_shadow : 3
 }
 
 var tips = {
@@ -389,7 +392,7 @@ function wordFocus(){
         cp1y = wordGraph.name;
         cp2x = parseFloat(wordGraph.id) + wordLength;
         cp2y = parseFloat(wordGraph.name) + wordHeight;
-        prepareWordGraph(cp1x,cp2x,cp1y,cp2y,word,canvas_index,tips["word_font"],"word",colors[color]);  
+        prepareWordGraph(cp1x,cp2x,cp1y,cp2y,word,canvas_index,tips["word_font"],"word", color);  
       
         drawWord(graph);
         addWordFunction(graph);
@@ -403,7 +406,7 @@ function wordFocus(){
         focusGraph.cp2.y = parseFloat(focusGraph.getChildByName("draw").y) + wordHeight; 
         focusGraph.word = word;
 
-        focusGraph.color = colors[color];
+        focusGraph.color = color;
         focusGraph.lineWidth = wordLength;
 
         drawWord(focusGraph);
@@ -416,6 +419,7 @@ function wordFocus(){
     wordGraph = null;
   }
 }
+
 function getTextarea(x,y,px,py,g){
   var newTip = document.createElement("textarea");
   wordGraph = newTip;
@@ -470,8 +474,6 @@ function wordClick(event) {
   //var tip = tips["yes"];
 
   getTextarea(0,0,0,0,0);
-  
-  
 }
 */
 function prepareWordGraph(cp1x,cp2x,cp1y,cp2y,word,idx,size,shp,col){
@@ -492,25 +494,21 @@ function prepareWordGraph(cp1x,cp2x,cp1y,cp2y,word,idx,size,shp,col){
   graph.height = graph.cp2.y - graph.cp1.y;
   // hit point: 拖动点，通过四个拖动点来修改图形。（对箭头则是起点和终点）（display）
   var hp = [new createjs.Shape(), new createjs.Shape(), new createjs.Shape(), new createjs.Shape()];
-  drawG = new createjs.Text(word,size, col);
-  
-  //drawG.maxWidth = 200 ;
-  
+  drawG = new createjs.Text(word,size, colors[col]);
 
+  //drawG.maxWidth = 200 ;
   hp[0].name = "hp1";
   hp[1].name = "hp2";
   hp[2].name = "hp3";
   hp[3].name = "hp4";
   drawG.name = "draw";
 
-  
   for (var i = 0; i < 4; i++)
   {
     hp[i].visible = false;
   }
   // 把（text）和（display）组件都装进容器里。
   graph.addChild(drawG, hp[0], hp[1], hp[2], hp[3]);
-
 
   stage.addChild(graph);
   stage.update();
@@ -573,16 +571,12 @@ function addWordFunction(g){
   g.getChildByName("draw").on("rollout", function (evt){
     reRangeLock = false;
   });
-
-
 }
 
 function drawWord(g){
   var draw = g.getChildByName("draw");
   var hp1  = g.getChildByName("hp1");
   var hp2  = g.getChildByName("hp2");
-  var hp3  = g.getChildByName("hp3");
-  var hp4  = g.getChildByName("hp4");
 
   draw.cursor = "pointer";
   hp1.cursor = "crosshair";
@@ -602,10 +596,19 @@ function drawWord(g){
   g.height = draw.getMeasuredHeight();
 
   var hitWordArea = new createjs.Shape();
-  hitWordArea.graphics.beginFill("#FFF").drawRect(0, 0,draw.lineWidth,draw.getMeasuredHeight());
+  hitWordArea.graphics.beginFill("#FFF").drawRect(0, 0, draw.lineWidth,draw.getMeasuredHeight());
   draw.hitArea = hitWordArea;
-  hp1.graphics.clear().beginFill(colors[color]).drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
-  hp2.graphics.clear().beginFill(colors[color]).drawCircle(g.cp2.x, g.cp1.y, sizes["hitpoint"]);
+
+  hp1.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
+  hp2.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp2.x, g.cp1.y, sizes["hitpoint"]);
+
+  var hpShadow = new createjs.Shadow(colors["shadow"], 0, 0, sizes["hitpoint_shadow"]);
+  hp1.shadow = hpShadow;
+  hp2.shadow = hpShadow;
 
   g.jobDone = true;
   stage.update();
@@ -620,11 +623,17 @@ function draw(g) {  // used to draw a picture.
     var hp3  = g.getChildByName("hp3");
     var hp4  = g.getChildByName("hp4");
 
+    var hpShadow = new createjs.Shadow(colors["shadow"], 0, 0, sizes["hitpoint_shadow"]);
+
     draw.cursor = "pointer";
     hp1.cursor = "crosshair";
     hp2.cursor = "crosshair";
     hp3.cursor = "crosshair";
     hp4.cursor = "crosshair";
+    hp1.shadow = hpShadow;
+    hp2.shadow = hpShadow;
+    hp3.shadow = hpShadow;
+    hp4.shadow = hpShadow;
     // alert("?")
     var sqrtS = Math.sqrt(sizes[g.size]);
   }
@@ -633,23 +642,45 @@ function draw(g) {  // used to draw a picture.
     case("shape-circle"):
       draw.graphics.clear().setStrokeStyle(sizes[g.size]).beginStroke(colors[g.color])
         .drawEllipse(g.cp1.x, g.cp1.y, (g.cp2.x-g.cp1.x), (g.cp2.y-g.cp1.y));
-      hp1.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
-      hp2.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp2.x, g.cp1.y, sizes["hitpoint"]);
-      hp3.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
-      hp4.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp1.x, g.cp2.y, sizes["hitpoint"]);
+
+      hp1.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
+      // hp1.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
+      hp2.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp2.x, g.cp1.y, sizes["hitpoint"]);
+      hp3.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
+      hp4.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp1.x, g.cp2.y, sizes["hitpoint"]);
       break;
     case("shape-square"):
       draw.graphics.clear().setStrokeStyle(sizes[g.size]).beginStroke(colors[g.color])
         .drawRoundRect(g.cp1.x, g.cp1.y, g.cp2.x-g.cp1.x, g.cp2.y-g.cp1.y, 7);
-      hp1.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
-      hp2.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp2.x, g.cp1.y, sizes["hitpoint"]);
-      hp3.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
-      hp4.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp1.x, g.cp2.y, sizes["hitpoint"]);
+      hp1.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
+      hp2.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp2.x, g.cp1.y, sizes["hitpoint"]);
+      hp3.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
+      hp4.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp1.x, g.cp2.y, sizes["hitpoint"]);
       break;
     case("shape-line"):
       draw.graphics.clear().setStrokeStyle(sizes[g.size], 1).beginStroke(colors[g.color]).moveTo(g.cp1.x, g.cp1.y).lineTo(g.cp2.x, g.cp2.y);
-      hp1.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
-      hp3.graphics.clear().beginFill(colors[g.color]).drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
+      hp1.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
+      hp3.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
       break;
     case("arrow"):  // Begin to draw an arrow.
       var golden_section = 0.618; // The Golden section
@@ -669,8 +700,13 @@ function draw(g) {  // used to draw a picture.
       .lineTo((x1+(x2-x1)*golden_section)+(y2-y1)*w/sqrt,(y1+(y2-y1)*golden_section+(x1-x2)*w/sqrt))
       .lineTo((x1+(x2-x1)*g2)+(y2-y1)*w2/sqrt,(y1+(y2-y1)*g2+(x1-x2)*w2/sqrt))
       .lineTo(x1, y1);
-      hp1.graphics.clear().beginFill(colors["lt_"+g.color]).drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
-      hp3.graphics.clear().beginFill(colors["lt_"+g.color]).drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
+
+      hp1.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp1.x, g.cp1.y, sizes["hitpoint"]);
+      hp3.graphics.clear().setStrokeStyle(sizes["hitpoint_edge"])
+        .beginFill(colors[g.color]).beginStroke(colors["hp_edge"])
+        .drawCircle(g.cp2.x, g.cp2.y, sizes["hitpoint"]);
       break;
     default:
       // alert("tip " + g.cp1.x + " " + g.cp1.y + " " +g.shape + tips[g.shape] + tips["tip_font"] + tips[g.shape+"_color"] + tips[g.shape+"_color"]);
