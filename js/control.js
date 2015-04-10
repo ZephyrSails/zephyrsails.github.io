@@ -437,11 +437,7 @@ function getTextarea(x,y,px,py,g){
   }
   // $(newTip).autosize();
 
-  domElement = new createjs.DOMElement(newTip);
-
-
-
-//addshapefunction(domElement);
+  domElement = new createjs.DOMElement(newTip); //addshapefunction(domElement);
   if(x==0 && y==0){
     domElement.x = wordX;
     domElement.y = wordY;
@@ -464,18 +460,6 @@ function getTextarea(x,y,px,py,g){
   stage.update();
 }
 
-/*
-function wordClick(event) {
-  if (reRangeLock)  // 是否正在调整图形？
-    return;
-  if (focusGraph)
-    loseFocus();
-  //stage.autoClear = false;
-  //var tip = tips["yes"];
-
-  getTextarea(0,0,0,0,0);
-}
-*/
 function prepareWordGraph(cp1x,cp2x,cp1y,cp2y,word,idx,size,shp,col){
   graph = new createjs.Container();
 
@@ -617,13 +601,12 @@ function drawWord(g){
 
 function draw(g) {  // used to draw a picture.
   var draw = g.getChildByName("draw");
+  var hpShadow = new createjs.Shadow(colors["shadow"], 0, 0, sizes["hitpoint_shadow"]);
   if (g.shape != "yes" && g.shape != "no" && g.shape != "why" && g.shape != "wow" && g.shape != "love" || changing == true) {
     var hp1  = g.getChildByName("hp1");
     var hp2  = g.getChildByName("hp2");
     var hp3  = g.getChildByName("hp3");
     var hp4  = g.getChildByName("hp4");
-
-    var hpShadow = new createjs.Shadow(colors["shadow"], 0, 0, sizes["hitpoint_shadow"]);
 
     draw.cursor = "pointer";
     hp1.cursor = "crosshair";
@@ -724,13 +707,13 @@ function draw(g) {  // used to draw a picture.
       var hitArea = new createjs.Shape();
       hitArea.graphics.beginFill("#FFF").drawCircle(g.cp1.x, g.cp1.y, 15);
       tip_circle.hitArea = hitArea;
+
+      // draw.shadow = hpShadow;
       // alert(tip_word.x + tip_word.x);
   }
   g.jobDone = true;
   stage.update();
 }
-
-
 
 function prepareGraph(clr, shp, siz, idx, cp1x, cp1y) {
   graph = new createjs.Container(); // 用来盛放独立图形的容器
